@@ -29,7 +29,7 @@ keep_alive()
 # ==========================================================
 
 # 🔴 ANH DÁN CÁI MÃ BUCKET VỪA COPY VÀO ĐÂY NHÉ:
-KVDB_BUCKET = 'https://kvdb.io/CRbYngwJV8ydx7UrWrgRcm/'
+KVDB_BUCKET = 'CRbYngwJV8ydx7UrWrgRcm'
 KVDB_URL = f"https://kvdb.io/bucket/{KVDB_BUCKET}/history"
 
 TELEGRAM_TOKEN = '8262052565:AAHCs6M3HIo2R4-uljDAMKVbVPOYllTthQ8'
