@@ -28,7 +28,6 @@ keep_alive()
 # --- CẤU HÌNH NHÀ KHO ĐÁM MÂY VÀ BỘ LỌC ---
 # ==========================================================
 
-# 🔴 ANH DÁN CÁI MÃ BUCKET VỪA COPY VÀO ĐÂY NHÉ:
 KVDB_BUCKET = 'CRbYngwJV8ydx7UrWrgRcm'
 KVDB_URL = f"https://kvdb.io/bucket/{KVDB_BUCKET}/history"
 
@@ -74,6 +73,13 @@ HOT_KEYWORDS = [
     'RÚT', 'DỪNG', 'HỦY', 'ĐÌNH CHỈ', 'THU HỒI'
 ]
 
+# 🔴 SIÊU NGỤY TRANG ĐỂ VƯỢT TƯỜNG LỬA CỦA BÁO
+SUPER_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    'Accept-Language': 'vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7'
+}
+
 # --- HỆ THỐNG TRÍ NHỚ VĨNH CỬU ---
 def load_history():
     print("☁️ Đang tải trí nhớ từ Đám Mây...")
@@ -87,13 +93,11 @@ def load_history():
 
 def save_history(links_list):
     try:
-        # Chỉ nhớ 500 tin gần nhất để kho chứa luôn nhẹ và chạy nhanh
         links_to_save = links_list[-500:] 
         requests.post(KVDB_URL, json=links_to_save)
     except Exception as e:
         print(f"Lỗi lưu kho: {e}")
 
-# Kéo lịch sử về RAM khi vừa bật máy
 sent_links = load_history()
 is_database_empty = len(sent_links) == 0
 
@@ -101,8 +105,7 @@ def get_sapo(link_detail, source_name):
     if source_name == "F319":
         return "⚠️ CẢNH BÁO: Đây là tin từ diễn đàn F319 (Tin đồn). Vui lòng kiểm chứng kỹ."
     try:
-        headers = {'User-Agent': 'Mozilla/5.0'}
-        r = requests.get(link_detail, headers=headers, timeout=10)
+        r = requests.get(link_detail, headers=SUPER_HEADERS, timeout=10)
         soup = BeautifulSoup(r.content, 'html.parser')
         sapo = soup.find(class_='sapo') 
         if not sapo: sapo = soup.find(class_='detail__summary') 
@@ -122,7 +125,6 @@ def send_telegram(message):
 def check_news(silent_mode=False):
     if not silent_mode:
         print(f"[{datetime.datetime.now().strftime('%H:%M:%S')}] Đang quét các đầu báo... (10s/lần)")
-    headers = {'User-Agent': 'Mozilla/5.0'}
 
     for url in URLS_TO_SCAN:
         try:
@@ -145,20 +147,29 @@ def check_news(silent_mode=False):
             elif "mekongasean.vn" in url:
                 domain, source_name = "https://mekongasean.vn", "Mekong ASEAN"
 
-            response = requests.get(url, headers=headers, timeout=10)
+            response = requests.get(url, headers=SUPER_HEADERS, timeout=10)
+            
+            # 🔴 Cảnh báo trên Logs nếu web nào giở trò chặn Bot
+            if response.status_code != 200:
+                print(f"❌ [BỊ CHẶN] {source_name} báo lỗi truy cập (Mã: {response.status_code})")
+                continue
+
             soup = BeautifulSoup(response.content, 'html.parser')
 
             news_items = []
             if source_name == "F319": news_items = soup.find_all('h3', class_='title')
             elif source_name in ["CafeF", "VTC News"]: news_items = soup.find_all('h3')
             elif source_name == "VnEconomy": news_items = soup.find_all('h3', class_='story__title')
-            else: news_items = soup.find_all(['h2', 'h3'])
+            elif source_name == "Mekong ASEAN": news_items = soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']) # <--- MỞ RỘNG LƯỚI
+            else: news_items = soup.find_all(['h2', 'h3', 'h4', 'h5'])
 
             for item in news_items:
                 link_tag = item.find('a')
-                if not link_tag: continue
+                if not link_tag or not link_tag.has_attr('href'): continue
 
                 title = link_tag.get_text().strip()
+                if len(title) < 10: continue # Lọc bỏ các link ảnh không có chữ
+
                 link = link_tag['href']
 
                 if not link.startswith("http"):
@@ -197,21 +208,19 @@ def check_news(silent_mode=False):
                         
                         send_telegram(msg)
                         sent_links.append(link)
-                        save_history(sent_links) # Vừa báo Telegram là cất luôn vào kho Đám Mây
+                        save_history(sent_links) 
 
         except Exception as e:
             pass
 
 print("--- TOOL SIÊU GIÁN ĐIỆP ĐÃ LÊN MÂY KHỞI ĐỘNG ---")
 
-# Nếu kho trắng tinh (chạy lần đầu tiên trong đời), cho quét 1 vòng im lặng để nạp sổ
 if is_database_empty:
     print("--- KHO ĐANG TRỐNG! CHẠY VÒNG ĐẦU ĐỂ KHỞI TẠO TRÍ NHỚ ---")
     check_news(silent_mode=True)
     save_history(sent_links)
     print("--- NẠP XONG TRÍ NHỚ. BẮT ĐẦU CHẾ ĐỘ SĂN TIN CẢNH GIÁC CAO ĐỘ ---")
 
-# Vòng lặp vĩnh cửu đi săn
 while True:
     try:
         check_news(silent_mode=False)
