@@ -45,6 +45,8 @@ URLS_TO_SCAN = [
     "https://baochinhphu.vn/kinh-te.htm",
     "https://vov.vn/kinh-te",
     "https://f319.com/forums/thi-truong-chung-khoan.3/" 
+    "https://mekongasean.vn/",                            # Thêm trang chủ Mekong ASEAN
+    "https://mekongasean.vn/dien-dan-dau-tu/chung-khoan"  # Thêm chuyên mục Chứng khoán
 ]
 
 # --- TỪ KHÓA BỘ LỌC ---
