@@ -14,7 +14,9 @@ def home():
     return "Bot Chứng Khoán đang thức và chạy rất mượt!"
 
 def run():
-    app.run(host='0.0.0.0', port=8080)
+    # Lấy port Render tự động cấp, nếu không có thì mặc định 8080
+    port = int(os.environ.get('PORT', 8080))
+    app.run(host='0.0.0.0', port=port)
 
 def keep_alive():
     t = Thread(target=run)
@@ -23,7 +25,7 @@ def keep_alive():
 keep_alive() # Gọi hàm đánh thức Bot ngay lập tức
 
 # ==========================================================
-# --- CODE GỐC CỦA ANH BẮT ĐẦU TỪ ĐÂY ---
+# --- CODE GỐC BẮT ĐẦU TỪ ĐÂY ---
 # ==========================================================
 
 # --- CẤU HÌNH ---
@@ -45,7 +47,7 @@ URLS_TO_SCAN = [
     "https://baochinhphu.vn/kinh-te.htm",
     "https://vov.vn/kinh-te",
     "https://f319.com/forums/thi-truong-chung-khoan.3/", 
-    "https://mekongasean.vn/",                            # Thêm trang chủ Mekong ASEAN
+    "https://mekongasean.vn/",                            
     "https://mekongasean.vn/dien-dan-dau-tu/chung-khoan"
 ]
 
@@ -111,7 +113,7 @@ def send_telegram(message):
 # THÊM BIẾN is_first_run ĐỂ KIỂM SOÁT ĐỌC THẦM
 def check_news(is_first_run=False):
     if not is_first_run:
-        print(f"[{datetime.datetime.now().strftime('%H:%M:%S')}] Đang quét CafeF, VNEco, VTC, Gov, VOV... (10s/lần)")
+        print(f"[{datetime.datetime.now().strftime('%H:%M:%S')}] Đang quét CafeF, VNEco, VTC, Gov, VOV, MekongASEAN... (10s/lần)")
     headers = {'User-Agent': 'Mozilla/5.0'}
 
     for url in URLS_TO_SCAN:
@@ -139,9 +141,10 @@ def check_news(is_first_run=False):
             elif "f319.com" in url:
                 domain = "https://f319.com"
                 source_name = "F319"
-              elif "mekongasean.vn" in url:           # <--- THÊM ĐOẠN NÀY
+            elif "mekongasean.vn" in url:
                 domain = "https://mekongasean.vn"
                 source_name = "Mekong ASEAN"
+
             response = requests.get(url, headers=headers, timeout=10)
             soup = BeautifulSoup(response.content, 'html.parser')
 
@@ -212,7 +215,7 @@ def check_news(is_first_run=False):
         except Exception as e:
             pass
 
-print("--- TOOL SIÊU GIÁN ĐIỆP (FULL NGUỒN + VTC + GOV) ---")
+print("--- TOOL SIÊU GIÁN ĐIỆP ĐÃ KHỞI ĐỘNG ---")
 
 # THÊM CỜ ĐÁNH DẤU LẦN CHẠY ĐẦU TIÊN
 is_first_run = True 
