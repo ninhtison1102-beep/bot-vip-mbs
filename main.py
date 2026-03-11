@@ -44,9 +44,9 @@ URLS_TO_SCAN = [
     "https://vtcnews.vn/kinh-te-c167.html",
     "https://baochinhphu.vn/kinh-te.htm",
     "https://vov.vn/kinh-te",
-    "https://f319.com/forums/thi-truong-chung-khoan.3/" 
+    "https://f319.com/forums/thi-truong-chung-khoan.3/", 
     "https://mekongasean.vn/",                            # Thêm trang chủ Mekong ASEAN
-    "https://mekongasean.vn/dien-dan-dau-tu/chung-khoan"  # Thêm chuyên mục Chứng khoán
+    "https://mekongasean.vn/dien-dan-dau-tu/chung-khoan"
 ]
 
 # --- TỪ KHÓA BỘ LỌC ---
@@ -139,7 +139,9 @@ def check_news(is_first_run=False):
             elif "f319.com" in url:
                 domain = "https://f319.com"
                 source_name = "F319"
-
+              elif "mekongasean.vn" in url:           # <--- THÊM ĐOẠN NÀY
+                domain = "https://mekongasean.vn"
+                source_name = "Mekong ASEAN"
             response = requests.get(url, headers=headers, timeout=10)
             soup = BeautifulSoup(response.content, 'html.parser')
 
