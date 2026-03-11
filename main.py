@@ -82,8 +82,8 @@ def save_history(link):
 
 sent_links = load_history()
 
-def get_sapo(link_detail, source_type):
-    if source_type == "F319":
+def get_sapo(link_detail, source_name):
+    if source_name == "F319":
         return "⚠️ CẢNH BÁO: Đây là tin từ diễn đàn F319 (Tin đồn). Vui lòng kiểm chứng kỹ."
     try:
         headers = {'User-Agent': 'Mozilla/5.0'}
@@ -106,8 +106,10 @@ def send_telegram(message):
         requests.post(url, data=data)
     except Exception as e: print(f"Lỗi gửi tin: {e}")
 
-def check_news():
-    print(f"[{datetime.datetime.now().strftime('%H:%M:%S')}] Đang quét CafeF, VNEco, VTC, Gov, VOV... (10s/lần)")
+# THÊM BIẾN is_first_run ĐỂ KIỂM SOÁT ĐỌC THẦM
+def check_news(is_first_run=False):
+    if not is_first_run:
+        print(f"[{datetime.datetime.now().strftime('%H:%M:%S')}] Đang quét CafeF, VNEco, VTC, Gov, VOV... (10s/lần)")
     headers = {'User-Agent': 'Mozilla/5.0'}
 
     for url in URLS_TO_SCAN:
@@ -187,23 +189,38 @@ def check_news():
                         if is_match: break
 
                 if is_match:
-                     print(f"--> Tin mới ({source_name}): {title}")
-                     summary = get_sapo(link, source_name)
-                     warning_icon = "⚠️" if source_name == "F319" else "📰"
-
-                     msg = f"{warning_icon} NGUỒN: {source_name}\n{prefix}\n{title.upper()}\n\n{summary}\n\n👉 Link gốc: {link}"
-
-                     send_telegram(msg)
-                     sent_links.append(link)
-                     save_history(link)
+                    if is_first_run:
+                        # NẾU LÀ VÒNG ĐẦU TIÊN: Chỉ ghi vào sổ, không báo lên Telegram
+                        print(f"--> [ĐỌC THẦM BỎ QUA SPAM] ({source_name}): {title}")
+                        sent_links.append(link)
+                        save_history(link)
+                    else:
+                        # TỪ VÒNG THỨ 2 TRỞ ĐI: Bắn tin ầm ầm
+                        print(f"--> Tin mới ({source_name}): {title}")
+                        summary = get_sapo(link, source_name)
+                        warning_icon = "⚠️" if source_name == "F319" else "📰"
+                        msg = f"{warning_icon} NGUỒN: {source_name}\n{prefix}\n{title.upper()}\n\n{summary}\n\n👉 Link gốc: {link}"
+                        
+                        send_telegram(msg)
+                        sent_links.append(link)
+                        save_history(link)
 
         except Exception as e:
             pass
 
 print("--- TOOL SIÊU GIÁN ĐIỆP (FULL NGUỒN + VTC + GOV) ---")
+
+# THÊM CỜ ĐÁNH DẤU LẦN CHẠY ĐẦU TIÊN
+is_first_run = True 
+
 while True:
     try:
-        check_news()
+        check_news(is_first_run)
+        
+        if is_first_run:
+            print("--- ĐÃ ĐỌC THẦM XONG TIN CŨ, BẮT ĐẦU CANH TIN MỚI ---")
+            is_first_run = False # Hủy cờ đọc thầm, từ giờ sẽ hú còi
+            
         time.sleep(10) 
     except KeyboardInterrupt:
         break
