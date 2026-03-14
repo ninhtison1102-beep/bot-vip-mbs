@@ -73,11 +73,21 @@ HOT_KEYWORDS = [
     'RÚT', 'DỪNG', 'HỦY', 'ĐÌNH CHỈ', 'THU HỒI'
 ]
 
-# 🔴 SIÊU NGỤY TRANG ĐỂ VƯỢT TƯỜNG LỬA CỦA BÁO
+# 🔴 SIÊU NGỤY TRANG ĐỂ VƯỢT TƯỜNG LỬA CỦA BÁO (UPDATE MỚI NHẤT)
 SUPER_HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-    'Accept-Language': 'vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7'
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Edg/122.0.0.0',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+    'Accept-Language': 'vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7',
+    'Referer': 'https://www.google.com.vn/',
+    'Sec-Ch-Ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Microsoft Edge";v="122"',
+    'Sec-Ch-Ua-Mobile': '?0',
+    'Sec-Ch-Ua-Platform': '"Windows"',
+    'Sec-Fetch-Dest': 'document',
+    'Sec-Fetch-Mode': 'navigate',
+    'Sec-Fetch-Site': 'cross-site',
+    'Sec-Fetch-User': '?1',
+    'Upgrade-Insecure-Requests': '1',
+    'Connection': 'keep-alive'
 }
 
 # --- HỆ THỐNG TRÍ NHỚ VĨNH CỬU ---
