@@ -1,10 +1,8 @@
-import requests
-import cloudscraper
-from bs4 import BeautifulSoup
+import os
 import time
 import datetime
-import os
-import json
+from bs4 import BeautifulSoup
+from curl_cffi import requests as cureq
 from flask import Flask
 from threading import Thread
 
@@ -79,7 +77,7 @@ HOT_KEYWORDS = [
 def load_history():
     print("☁️ Đang tải trí nhớ từ Đám Mây...")
     try:
-        r = requests.get(KVDB_URL)
+        r = cureq.get(KVDB_URL, impersonate="chrome110")
         if r.status_code == 200:
             return r.json()
     except: pass
@@ -88,22 +86,18 @@ def load_history():
 def save_history(links_list):
     try:
         links_to_save = links_list[-500:] 
-        requests.post(KVDB_URL, json=links_to_save)
+        cureq.post(KVDB_URL, json=links_to_save, impersonate="chrome110")
     except: pass
 
 sent_links = load_history()
 is_database_empty = len(sent_links) == 0
 
-# 🔴 KHỞI TẠO VŨ KHÍ XUYÊN GIÁP CLOUDFLARE
-scraper = cloudscraper.create_scraper(
-    browser={'browser': 'chrome', 'platform': 'windows', 'desktop': True}
-)
-
 def get_sapo(link_detail, source_name):
     if source_name == "F319":
         return "⚠️ CẢNH BÁO: Đây là tin từ diễn đàn F319 (Tin đồn). Vui lòng kiểm chứng kỹ."
     try:
-        r = scraper.get(link_detail, timeout=10)
+        # 🔴 VŨ KHÍ CẤP CAO: Ép bot đóng giả cấu trúc mã hóa của Chrome 110
+        r = cureq.get(link_detail, impersonate="chrome110", timeout=15)
         soup = BeautifulSoup(r.content, 'html.parser')
         sapo = soup.find(class_='sapo') 
         if not sapo: sapo = soup.find(class_='detail__summary') 
@@ -117,7 +111,7 @@ def send_telegram(message):
     try:
         url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
         data = {"chat_id": YOUR_GROUP_ID, "text": message}
-        requests.post(url, data=data)
+        cureq.post(url, data=data, impersonate="chrome110")
     except Exception as e: print(f"Lỗi gửi tin: {e}")
 
 def check_news(silent_mode=False):
@@ -128,25 +122,17 @@ def check_news(silent_mode=False):
         try:
             domain = ""
             source_name = ""
-            if "cafef.vn" in url: 
-                domain, source_name = "https://cafef.vn", "CafeF"
-            elif "vneconomy.vn" in url: 
-                domain, source_name = "https://vneconomy.vn", "VnEconomy"
-            elif "nguoiquansat.vn" in url: 
-                domain, source_name = "https://nguoiquansat.vn", "Người Quan Sát"
-            elif "vtcnews.vn" in url:
-                domain, source_name = "https://vtcnews.vn", "VTC News"
-            elif "baochinhphu.vn" in url:
-                domain, source_name = "https://baochinhphu.vn", "Báo Chính Phủ"
-            elif "vov.vn" in url:
-                domain, source_name = "https://vov.vn", "VOV"
-            elif "f319.com" in url:
-                domain, source_name = "https://f319.com", "F319"
-            elif "mekongasean.vn" in url:
-                domain, source_name = "https://mekongasean.vn", "Mekong ASEAN"
+            if "cafef.vn" in url: domain, source_name = "https://cafef.vn", "CafeF"
+            elif "vneconomy.vn" in url: domain, source_name = "https://vneconomy.vn", "VnEconomy"
+            elif "nguoiquansat.vn" in url: domain, source_name = "https://nguoiquansat.vn", "Người Quan Sát"
+            elif "vtcnews.vn" in url: domain, source_name = "https://vtcnews.vn", "VTC News"
+            elif "baochinhphu.vn" in url: domain, source_name = "https://baochinhphu.vn", "Báo Chính Phủ"
+            elif "vov.vn" in url: domain, source_name = "https://vov.vn", "VOV"
+            elif "f319.com" in url: domain, source_name = "https://f319.com", "F319"
+            elif "mekongasean.vn" in url: domain, source_name = "https://mekongasean.vn", "Mekong ASEAN"
 
-            # 🔴 BẮN XUYÊN TƯỜNG LỬA BẰNG CLOUDSCRAPER
-            response = scraper.get(url, timeout=15)
+            # 🔴 BẮN XUYÊN TƯỜNG LỬA BẰNG CURL_CFFI
+            response = cureq.get(url, impersonate="chrome110", timeout=15)
             
             if response.status_code != 200:
                 print(f"❌ [BỊ CHẶN] {source_name} báo lỗi (Mã: {response.status_code})")
@@ -211,7 +197,7 @@ def check_news(silent_mode=False):
         except Exception as e:
             pass
 
-print("--- TOOL SIÊU GIÁN ĐIỆP ĐÃ LÊN MÂY KHỞI ĐỘNG ---")
+print("--- TOOL SIÊU GIÁN ĐIỆP ĐÃ LÊN MÂY KHỞI ĐỘNG (CHROME V110) ---")
 
 if is_database_empty:
     print("--- KHO ĐANG TRỐNG! CHẠY VÒNG ĐẦU ĐỂ KHỞI TẠO TRÍ NHỚ ---")
