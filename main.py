@@ -1,4 +1,5 @@
 import requests
+import cloudscraper
 from bs4 import BeautifulSoup
 import time
 import datetime
@@ -28,7 +29,8 @@ keep_alive()
 # --- CẤU HÌNH NHÀ KHO ĐÁM MÂY VÀ BỘ LỌC ---
 # ==========================================================
 
-KVDB_BUCKET = 'CRbYngwJV8ydx7UrWrgRcm'
+# 🔴 ANH DÁN CÁI MÃ BUCKET CỦA ANH VÀO ĐÂY:
+KVDB_BUCKET = 'CRbYngwJV8ydx7UrWrgRcm' 
 KVDB_URL = f"https://kvdb.io/bucket/{KVDB_BUCKET}/history"
 
 TELEGRAM_TOKEN = '8262052565:AAHCs6M3HIo2R4-uljDAMKVbVPOYllTthQ8'
@@ -73,23 +75,6 @@ HOT_KEYWORDS = [
     'RÚT', 'DỪNG', 'HỦY', 'ĐÌNH CHỈ', 'THU HỒI'
 ]
 
-# 🔴 SIÊU NGỤY TRANG ĐỂ VƯỢT TƯỜNG LỬA CỦA BÁO (UPDATE MỚI NHẤT)
-SUPER_HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Edg/122.0.0.0',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-    'Accept-Language': 'vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7',
-    'Referer': 'https://www.google.com.vn/',
-    'Sec-Ch-Ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Microsoft Edge";v="122"',
-    'Sec-Ch-Ua-Mobile': '?0',
-    'Sec-Ch-Ua-Platform': '"Windows"',
-    'Sec-Fetch-Dest': 'document',
-    'Sec-Fetch-Mode': 'navigate',
-    'Sec-Fetch-Site': 'cross-site',
-    'Sec-Fetch-User': '?1',
-    'Upgrade-Insecure-Requests': '1',
-    'Connection': 'keep-alive'
-}
-
 # --- HỆ THỐNG TRÍ NHỚ VĨNH CỬU ---
 def load_history():
     print("☁️ Đang tải trí nhớ từ Đám Mây...")
@@ -97,25 +82,28 @@ def load_history():
         r = requests.get(KVDB_URL)
         if r.status_code == 200:
             return r.json()
-    except:
-        pass
+    except: pass
     return []
 
 def save_history(links_list):
     try:
         links_to_save = links_list[-500:] 
         requests.post(KVDB_URL, json=links_to_save)
-    except Exception as e:
-        print(f"Lỗi lưu kho: {e}")
+    except: pass
 
 sent_links = load_history()
 is_database_empty = len(sent_links) == 0
+
+# 🔴 KHỞI TẠO VŨ KHÍ XUYÊN GIÁP CLOUDFLARE
+scraper = cloudscraper.create_scraper(
+    browser={'browser': 'chrome', 'platform': 'windows', 'desktop': True}
+)
 
 def get_sapo(link_detail, source_name):
     if source_name == "F319":
         return "⚠️ CẢNH BÁO: Đây là tin từ diễn đàn F319 (Tin đồn). Vui lòng kiểm chứng kỹ."
     try:
-        r = requests.get(link_detail, headers=SUPER_HEADERS, timeout=10)
+        r = scraper.get(link_detail, timeout=10)
         soup = BeautifulSoup(r.content, 'html.parser')
         sapo = soup.find(class_='sapo') 
         if not sapo: sapo = soup.find(class_='detail__summary') 
@@ -157,11 +145,11 @@ def check_news(silent_mode=False):
             elif "mekongasean.vn" in url:
                 domain, source_name = "https://mekongasean.vn", "Mekong ASEAN"
 
-            response = requests.get(url, headers=SUPER_HEADERS, timeout=10)
+            # 🔴 BẮN XUYÊN TƯỜNG LỬA BẰNG CLOUDSCRAPER
+            response = scraper.get(url, timeout=15)
             
-            # 🔴 Cảnh báo trên Logs nếu web nào giở trò chặn Bot
             if response.status_code != 200:
-                print(f"❌ [BỊ CHẶN] {source_name} báo lỗi truy cập (Mã: {response.status_code})")
+                print(f"❌ [BỊ CHẶN] {source_name} báo lỗi (Mã: {response.status_code})")
                 continue
 
             soup = BeautifulSoup(response.content, 'html.parser')
@@ -170,7 +158,7 @@ def check_news(silent_mode=False):
             if source_name == "F319": news_items = soup.find_all('h3', class_='title')
             elif source_name in ["CafeF", "VTC News"]: news_items = soup.find_all('h3')
             elif source_name == "VnEconomy": news_items = soup.find_all('h3', class_='story__title')
-            elif source_name == "Mekong ASEAN": news_items = soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']) # <--- MỞ RỘNG LƯỚI
+            elif source_name == "Mekong ASEAN": news_items = soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])
             else: news_items = soup.find_all(['h2', 'h3', 'h4', 'h5'])
 
             for item in news_items:
@@ -178,7 +166,7 @@ def check_news(silent_mode=False):
                 if not link_tag or not link_tag.has_attr('href'): continue
 
                 title = link_tag.get_text().strip()
-                if len(title) < 10: continue # Lọc bỏ các link ảnh không có chữ
+                if len(title) < 10: continue 
 
                 link = link_tag['href']
 
